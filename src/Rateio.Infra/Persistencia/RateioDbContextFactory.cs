@@ -8,8 +8,9 @@ public sealed class RateioDbContextFactory : IDesignTimeDbContextFactory<RateioD
 {
     public RateioDbContext CreateDbContext(string[] args)
     {
-        var conexao = Environment.GetEnvironmentVariable("ConnectionStrings__Rateio")
-            ?? "Server=localhost,1433;Database=Rateio;Integrated Security=false;TrustServerCertificate=True";
-        return new RateioDbContext(new DbContextOptionsBuilder<RateioDbContext>().UseSqlServer(conexao).Options);
+        // Conexão fictícia: gerar migrations não acessa o banco
+        var opcoes = new DbContextOptionsBuilder<RateioDbContext>();
+        ConfiguracaoInfra.Configurar(opcoes, "Server=localhost;Database=Rateio;TrustServerCertificate=True", ProvedorBanco.SqlServer);
+        return new RateioDbContext(opcoes.Options);
     }
 }

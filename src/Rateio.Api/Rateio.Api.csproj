@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Rateio.Infra\Rateio.Infra.csproj" />
     <ProjectReference Include="..\Rateio.Dominio\Rateio.Dominio.csproj" />
+    <ProjectReference Include="..\Rateio.Infra.Postgres\Rateio.Infra.Postgres.csproj" />
   </ItemGroup>
 
   <ItemGroup>

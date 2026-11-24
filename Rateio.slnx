@@ -2,6 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/Rateio.Api/Rateio.Api.csproj" />
     <Project Path="src/Rateio.Dominio/Rateio.Dominio.csproj" />
+    <Project Path="src/Rateio.Infra.Postgres/Rateio.Infra.Postgres.csproj" />
     <Project Path="src/Rateio.Infra/Rateio.Infra.csproj" />
   </Folder>
   <Folder Name="/tests/">

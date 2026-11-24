@@ -1,4 +1,7 @@
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Rateio.Api;
 using Rateio.Api.Endpoints;
@@ -8,12 +11,19 @@ using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ------------------------------------------------------------ banco
+
 var conexao = builder.Configuration.GetConnectionString("Rateio")
     ?? throw new InvalidOperationException(
         "String de conexão 'Rateio' não configurada. Defina ConnectionStrings__Rateio " +
         "(no Codespace ela já vem configurada pelo .devcontainer).");
 
-builder.Services.AdicionarInfra(conexao);
+// SQL Server no desenvolvimento e nos testes; PostgreSQL na demo pública (Neon)
+var provedor = builder.Configuration.GetValue("Banco:Provedor", ProvedorBanco.SqlServer);
+builder.Services.AdicionarInfra(conexao, provedor);
+
+// ------------------------------------------------------------ API
+
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<TratadorDeErros>();
 builder.Services.AddOpenApi(o => o.AddDocumentTransformer((documento, _, _) =>
@@ -34,11 +44,53 @@ builder.Services.ConfigureHttpJsonOptions(o =>
 var origens = builder.Configuration.GetSection("Cors:Origens").Get<string[]>() ?? [];
 builder.Services.AddCors(o => o.AddDefaultPolicy(p => p.WithOrigins(origens).AllowAnyHeader().AllowAnyMethod()));
 
+// ------------------------------------------------------------ proteção da demo pública
+
+// Limita gravações por IP: a API é aberta, e isso evita que alguém encha o banco gratuito de lixo.
+// Leituras não são limitadas.
+var escritasPorMinuto = builder.Configuration.GetValue("LimiteDeRequisicoes:EscritasPorMinuto", 60);
+builder.Services.AddRateLimiter(o =>
+{
+    o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    o.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(contexto =>
+        HttpMethods.IsGet(contexto.Request.Method) || HttpMethods.IsHead(contexto.Request.Method) || HttpMethods.IsOptions(contexto.Request.Method)
+            ? RateLimitPartition.GetNoLimiter("leitura")
+            : RateLimitPartition.GetFixedWindowLimiter(
+                contexto.Connection.RemoteIpAddress?.ToString() ?? "desconhecido",
+                _ => new FixedWindowRateLimiterOptions { PermitLimit = escritasPorMinuto, Window = TimeSpan.FromMinutes(1) }));
+    o.OnRejected = async (contexto, ct) =>
+    {
+        contexto.HttpContext.Response.Headers.RetryAfter = "60";
+        await contexto.HttpContext.Response.WriteAsJsonAsync(new ProblemDetails
+        {
+            Status = StatusCodes.Status429TooManyRequests,
+            Title = "Muitas alterações seguidas",
+            Detail = "Aguarde um minuto e tente de novo.",
+        }, ct);
+    };
+});
+
+// Atrás de um proxy (Render), o IP real do visitante vem no cabeçalho X-Forwarded-For
+var atrasDeProxy = builder.Configuration.GetValue<bool>("Proxy:ConfiarEmCabecalhosEncaminhados");
+if (atrasDeProxy)
+{
+    builder.Services.Configure<ForwardedHeadersOptions>(o =>
+    {
+        o.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+        o.KnownIPNetworks.Clear();
+        o.KnownProxies.Clear();
+    });
+}
+
 var app = builder.Build();
+
+if (atrasDeProxy)
+    app.UseForwardedHeaders();
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseCors();
+app.UseRateLimiter();
 
 if (app.Configuration.GetValue<bool>("Banco:AplicarMigrationsAoIniciar"))
 {

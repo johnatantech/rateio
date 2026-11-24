@@ -139,6 +139,11 @@ public sealed class RepositorioDeGrupos(RateioDbContext db, TimeProvider relogio
         return new GrupoCarregado(grupo, registro.Cidade, registro.CriadoEm);
     }
 
-    private static bool ViolouUnicidade(DbUpdateException erro) =>
-        erro.InnerException is SqlException { Number: 2601 or 2627 };
+    /// <summary>Violação de índice único: códigos 2601/2627 no SQL Server e 23505 no PostgreSQL.</summary>
+    private static bool ViolouUnicidade(DbUpdateException erro) => erro.InnerException switch
+    {
+        SqlException { Number: 2601 or 2627 } => true,
+        Npgsql.PostgresException { SqlState: Npgsql.PostgresErrorCodes.UniqueViolation } => true,
+        _ => false,
+    };
 }

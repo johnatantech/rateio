@@ -20,7 +20,7 @@ env:
 
 jobs:
   build-e-testes:
-    name: Build e testes (.NET + SQL Server)
+    name: Build e testes (.NET + SQL Server e PostgreSQL)
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -40,6 +40,19 @@ jobs:
           --health-timeout 5s
           --health-retries 12
           --health-start-period 20s
+
+      # PostgreSQL descartável: mesmo banco usado na demo pública (Neon)
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: "Rateio_CI_Teste_2026!"
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
 
     env:
       ConnectionStrings__Rateio: "Server=localhost,1433;Database=Rateio;User Id=sa;Password=Rateio_CI_Teste_2026!;TrustServerCertificate=True"
@@ -66,8 +79,10 @@ jobs:
       - name: Compilar (avisos tratados como erro)
         run: dotnet build Rateio.slnx -c Release --no-restore
 
-      - name: Conferir se as migrations estão em dia com o modelo
-        run: dotnet ef migrations has-pending-model-changes --project src/Rateio.Infra --startup-project src/Rateio.Infra --no-build --configuration Release
+      - name: Conferir se as migrations estão em dia com o modelo (SQL Server e PostgreSQL)
+        run: |
+          dotnet ef migrations has-pending-model-changes --project src/Rateio.Infra --startup-project src/Rateio.Infra --no-build --configuration Release
+          dotnet ef migrations has-pending-model-changes --project src/Rateio.Infra.Postgres --startup-project src/Rateio.Infra.Postgres --no-build --configuration Release
 
       - name: Testar (domínio + integração com SQL Server)
         run: >
@@ -76,9 +91,18 @@ jobs:
           --collect:"XPlat Code Coverage"
           --results-directory TestResults
 
+      - name: Testar integração com PostgreSQL
+        env:
+          Banco__Provedor: Postgres
+          ConnectionStrings__Rateio: "Host=localhost;Port=5432;Database=postgres;Username=postgres;Password=Rateio_CI_Teste_2026!"
+        run: >
+          dotnet test tests/Rateio.Api.Tests -c Release --no-build
+          --logger trx
+          --results-directory TestResults/postgres
+
       - name: Garantir que os testes de integração rodaram (não foram pulados)
         run: |
-          if grep -q 'outcome="NotExecuted"' TestResults/*.trx 2>/dev/null; then
+          if grep -rq 'outcome="NotExecuted"' TestResults --include=*.trx; then
             echo "::error::Há testes pulados. Confira a variável ConnectionStrings__Rateio."
             exit 1
           fi
@@ -116,3 +140,16 @@ jobs:
 
       - name: Build de produção
         run: npm run build
+
+  docker:
+    name: Imagem Docker da API
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: build-e-testes
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # Garante que a imagem usada no deploy do Render continua compilando
+      - name: Build da imagem
+        run: docker build -t rateio-api:ci .
