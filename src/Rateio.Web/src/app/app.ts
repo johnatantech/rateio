@@ -1,5 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
+import { EstadoApi } from './core/estado-api';
+import { RateioApi } from './core/rateio-api';
 
 @Component({
   selector: 'app-root',
@@ -15,6 +17,11 @@ import { RouterLink, RouterOutlet } from '@angular/router';
         Rateio
       </a>
     </header>
+    @if (estadoApi.acordando()) {
+      <p class="acordando" role="status">
+        Acordando o servidor gratuito da demo. A primeira abertura pode levar até um minuto.
+      </p>
+    }
     <main class="conteudo">
       <router-outlet />
     </main>
@@ -33,6 +40,11 @@ import { RouterLink, RouterOutlet } from '@angular/router';
       font-family: var(--fonte-titulo); font-weight: 700; font-size: 1.35rem;
       color: var(--tinta); text-decoration: none;
     }
+    .acordando {
+      max-width: var(--largura); width: calc(100% - 2.5rem); margin: 0.5rem auto 0;
+      padding: 0.75rem 1rem; border-radius: var(--raio-campo);
+      background: var(--verde-claro); color: var(--verde-escuro); font-weight: 700;
+    }
     .conteudo { flex: 1; width: 100%; max-width: var(--largura); margin: 0 auto; padding: 0.75rem 1.25rem 3rem; }
     .rodape {
       max-width: var(--largura); width: 100%; margin: 0 auto; padding: 1.25rem;
@@ -40,4 +52,10 @@ import { RouterLink, RouterOutlet } from '@angular/router';
     }
   `,
 })
-export class App {}
+export class App {
+  protected readonly estadoApi = inject(EstadoApi);
+
+  constructor() {
+    inject(RateioApi).aquecer();
+  }
+}
