@@ -12,6 +12,28 @@
       <h2>Tudo acertado</h2>
       <p class="suave">Ninguém deve nada a ninguém neste grupo.</p>
     </div>
+
+    <section class="fechamento" aria-labelledby="titulo-fechamento">
+      <h2 id="titulo-fechamento">E agora?</h2>
+      <div class="opcao">
+        <div>
+          <p class="opcao-titulo">Começar uma nova rodada</p>
+          <p class="suave">Mantém as pessoas e apaga as despesas e os pagamentos. Bom para contas que se repetem, como as da casa.</p>
+        </div>
+        <button class="botao botao-secundario" type="button" [disabled]="fechando()" (click)="iniciarNovaRodada()">
+          Começar nova rodada
+        </button>
+      </div>
+      <div class="opcao">
+        <div>
+          <p class="opcao-titulo">Excluir o grupo</p>
+          <p class="suave">Apaga tudo para todos que têm o link. Não dá para desfazer.</p>
+        </div>
+        <button class="botao botao-perigo" type="button" [disabled]="fechando()" (click)="excluirGrupo()">
+          Excluir grupo
+        </button>
+      </div>
+    </section>
   } @else {
     <h2 class="titulo-secao">
       {{ estado.acertos().length === 1 ? 'Uma transferência zera o grupo' : estado.acertos().length + ' transferências zeram o grupo' }}

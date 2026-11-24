@@ -70,6 +70,16 @@ export class GrupoEstado {
     await this.recarregar();
   }
 
+  async iniciarNovaRodada() {
+    await this.api.iniciarNovaRodada(this.id);
+    await this.recarregar();
+  }
+
+  async excluirGrupo() {
+    await this.api.excluirGrupo(this.id);
+    this.meusGrupos.esquecer(this.id);
+  }
+
   async marcarComoPago(acerto: Acerto) {
     await this.api.registrarPagamento(this.id, acerto.de.id, acerto.para.id, acerto.valor);
     await this.recarregar();

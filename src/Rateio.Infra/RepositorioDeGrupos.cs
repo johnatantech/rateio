@@ -107,6 +107,48 @@ public sealed class RepositorioDeGrupos(RateioDbContext db, TimeProvider relogio
         await db.SaveChangesAsync(ct);
     }
 
+    /// <summary>Apaga despesas e pagamentos do grupo, mantendo as pessoas. Exige todos quites.</summary>
+    public async Task IniciarNovaRodadaAsync(GrupoCarregado carregado, CancellationToken ct = default)
+    {
+        carregado.Grupo.IniciarNovaRodada();
+        await EmTransacaoAsync(async () => await ApagarMovimentacoesAsync(carregado.Grupo.Id, ct), ct);
+    }
+
+    /// <summary>Exclui o grupo com pessoas, despesas e pagamentos. Exige todos quites.</summary>
+    public async Task ExcluirAsync(GrupoCarregado carregado, CancellationToken ct = default)
+    {
+        carregado.Grupo.GarantirQuitado("excluir o grupo");
+        var grupoId = carregado.Grupo.Id;
+
+        // Ordem explícita, dos registros que dependem para os de que dependem.
+        // Não confia na cascata: SQL Server e PostgreSQL resolvem a ordem das cascatas de jeitos diferentes
+        await EmTransacaoAsync(async () =>
+        {
+            await ApagarMovimentacoesAsync(grupoId, ct);
+            await db.Participantes.Where(p => p.GrupoId == grupoId).ExecuteDeleteAsync(ct);
+            await db.Grupos.Where(g => g.Id == grupoId).ExecuteDeleteAsync(ct);
+        }, ct);
+    }
+
+    private async Task ApagarMovimentacoesAsync(Guid grupoId, CancellationToken ct)
+    {
+        await db.Pagamentos.Where(p => p.GrupoId == grupoId).ExecuteDeleteAsync(ct);
+        await db.Divisoes.Where(d => db.Despesas.Any(x => x.Id == d.DespesaId && x.GrupoId == grupoId)).ExecuteDeleteAsync(ct);
+        await db.Despesas.Where(d => d.GrupoId == grupoId).ExecuteDeleteAsync(ct);
+    }
+
+    /// <summary>
+    /// Várias exclusões que precisam acontecer juntas. Com a estratégia de nova tentativa ativa,
+    /// a transação precisa rodar dentro da estratégia de execução do EF Core.
+    /// </summary>
+    private Task EmTransacaoAsync(Func<Task> operacao, CancellationToken ct) =>
+        db.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
+        {
+            await using var transacao = await db.Database.BeginTransactionAsync(ct);
+            await operacao();
+            await transacao.CommitAsync(ct);
+        });
+
     // ------------------------------------------------------------ reconstrução do domínio
 
     private static GrupoCarregado Reconstruir(GrupoRegistro registro)

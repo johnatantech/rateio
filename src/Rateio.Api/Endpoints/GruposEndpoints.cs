@@ -13,6 +13,10 @@ public static class GruposEndpoints
 
         grupos.MapPost("/", CriarGrupo).WithSummary("Cria um grupo");
         grupos.MapGet("/{grupoId:guid}", ObterGrupo).WithName("ObterGrupo").WithSummary("Dados do grupo e participantes");
+        grupos.MapDelete("/{grupoId:guid}", ExcluirGrupo)
+            .WithSummary("Exclui o grupo com tudo o que tem nele (exige todos quites)");
+        grupos.MapPost("/{grupoId:guid}/nova-rodada", IniciarNovaRodada)
+            .WithSummary("Apaga despesas e pagamentos e mantém as pessoas (exige todos quites)");
 
         grupos.MapPost("/{grupoId:guid}/participantes", AdicionarParticipante).WithTags("Participantes")
             .WithSummary("Adiciona um participante, com chave Pix opcional");
@@ -47,6 +51,24 @@ public static class GruposEndpoints
         await repositorio.CarregarAsync(grupoId, ct) is { } carregado
             ? TypedResults.Ok(ParaResposta(carregado))
             : TypedResults.NotFound();
+
+    private static async Task<Results<NoContent, NotFound>> ExcluirGrupo(
+        Guid grupoId, RepositorioDeGrupos repositorio, CancellationToken ct)
+    {
+        if (await repositorio.CarregarAsync(grupoId, ct) is not { } carregado)
+            return TypedResults.NotFound();
+        await repositorio.ExcluirAsync(carregado, ct);
+        return TypedResults.NoContent();
+    }
+
+    private static async Task<Results<Ok<GrupoResposta>, NotFound>> IniciarNovaRodada(
+        Guid grupoId, RepositorioDeGrupos repositorio, CancellationToken ct)
+    {
+        if (await repositorio.CarregarAsync(grupoId, ct) is not { } carregado)
+            return TypedResults.NotFound();
+        await repositorio.IniciarNovaRodadaAsync(carregado, ct);
+        return TypedResults.Ok(ParaResposta(carregado));
+    }
 
     // ------------------------------------------------------------ participantes
 

@@ -82,6 +82,32 @@ public sealed class Grupo
         return saldos;
     }
 
+    /// <summary>Verdadeiro quando há despesas e todos os saldos estão zerados.</summary>
+    public bool EstaQuitado => _despesas.Count > 0 && CalcularSaldos().Values.All(s => s.EhZero);
+
+    /// <summary>
+    /// Fecha o rateio atual e começa outro com as mesmas pessoas (ex.: contas da casa do mês seguinte).
+    /// Só é permitido com todos quites, para não apagar dívidas em aberto.
+    /// </summary>
+    public void IniciarNovaRodada()
+    {
+        GarantirQuitado("começar uma nova rodada");
+        _despesas.Clear();
+        _pagamentos.Clear();
+    }
+
+    /// <summary>Lança erro se ainda houver acertos pendentes.</summary>
+    public void GarantirQuitado(string operacao)
+    {
+        if (_despesas.Count == 0)
+            throw new InvalidOperationException($"Não há despesas neste grupo para {operacao}.");
+        var pendentes = SugerirAcertos().Count;
+        if (pendentes > 0)
+            throw new InvalidOperationException(
+                $"Ainda {(pendentes == 1 ? "falta 1 acerto" : $"faltam {pendentes} acertos")} para {operacao}. " +
+                "Registre os pagamentos primeiro.");
+    }
+
     /// <summary>Transferências mínimas sugeridas para zerar o grupo.</summary>
     public IReadOnlyList<Transferencia> SugerirAcertos() => SimplificadorDeDividas.Simplificar(CalcularSaldos());
 

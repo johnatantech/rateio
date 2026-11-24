@@ -49,4 +49,21 @@ describe('RateioApi', () => {
     expect(erro).toBeInstanceOf(ErroDaApi);
     expect(erro.message).toContain('Sem conexão com a API');
   });
+
+  it('inicia uma nova rodada', async () => {
+    const promessa = api.iniciarNovaRodada('g1');
+    const req = http.expectOne('/api/grupos/g1/nova-rodada');
+    expect(req.request.method).toBe('POST');
+    req.flush({ id: 'g1', nome: 'Casa', cidade: 'SP', criadoEm: '', totalGasto: 0, quantidadeDespesas: 0, participantes: [] });
+    expect((await promessa).quantidadeDespesas).toBe(0);
+  });
+
+  it('mostra o motivo quando ainda há acertos pendentes', async () => {
+    const promessa = api.excluirGrupo('g1');
+    const req = http.expectOne('/api/grupos/g1');
+    expect(req.request.method).toBe('DELETE');
+    req.flush({ detail: 'Ainda falta 1 acerto para excluir o grupo. Registre os pagamentos primeiro.' },
+      { status: 422, statusText: 'Unprocessable Entity' });
+    await expect(promessa).rejects.toThrow('Ainda falta 1 acerto');
+  });
 });

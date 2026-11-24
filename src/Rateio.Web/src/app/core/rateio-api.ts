@@ -26,6 +26,16 @@ export class RateioApi {
     return this.enviar<Grupo>(this.http.get<Grupo>(`${this.base}/${id}`));
   }
 
+  /** Apaga despesas e pagamentos, mantendo as pessoas. A API só aceita com todos quites. */
+  iniciarNovaRodada(grupoId: string) {
+    return this.enviar<Grupo>(this.http.post<Grupo>(`${this.base}/${grupoId}/nova-rodada`, {}));
+  }
+
+  /** Exclui o grupo inteiro. A API só aceita com todos quites. */
+  excluirGrupo(grupoId: string) {
+    return this.enviar<void>(this.http.delete<void>(`${this.base}/${grupoId}`));
+  }
+
   adicionarParticipante(grupoId: string, nome: string, chavePix?: string) {
     return this.enviar<Participante>(
       this.http.post<Participante>(`${this.base}/${grupoId}/participantes`, { nome, chavePix: chavePix || null }));
