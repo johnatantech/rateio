@@ -1,0 +1,40 @@
+{
+  // Ambiente de desenvolvimento do Rateio: .NET 10 + SQL Server, pronto no GitHub Codespaces
+  // ou no VS Code com a extensão Dev Containers.
+  "name": "Rateio (.NET 10 + SQL Server)",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "shutdownAction": "stopCompose",
+
+  // O container da aplicação compartilha a rede do banco: o SQL Server responde em localhost,1433
+  "remoteEnv": {
+    "ConnectionStrings__Rateio": "Server=localhost,1433;Database=Rateio;User Id=sa;Password=Rateio_Dev_Local_2026!;TrustServerCertificate=True",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "DOTNET_NOLOGO": "1"
+  },
+
+  "forwardPorts": [5080],
+  "portsAttributes": {
+    "5080": { "label": "API Rateio", "onAutoForward": "notify" }
+  },
+
+  "postCreateCommand": "dotnet restore Rateio.slnx && dotnet build Rateio.slnx",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csdevkit",
+        "ms-mssql.mssql",
+        "github.vscode-github-actions"
+      ]
+    },
+    "codespaces": {
+      "openFiles": ["README.md"]
+    }
+  },
+
+  "hostRequirements": {
+    "memory": "8gb"
+  }
+}

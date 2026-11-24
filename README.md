@@ -66,6 +66,7 @@ rateio/
 │   ├── SimplificadorDeDividas.cs   # algoritmo guloso
 │   └── PixCopiaECola.cs            # geração e leitura do BR Code
 ├── tests/Rateio.Dominio.Tests/  # 351 testes, incluindo propriedades e exemplo do BCB
+├── .devcontainer/                  # ambiente .NET 10 + SQL Server para Codespaces
 ├── .github/workflows/ci.yml
 ├── Directory.Build.props
 └── Rateio.slnx
@@ -73,7 +74,19 @@ rateio/
 
 ## Como executar
 
-Pré-requisito: [.NET 10 SDK](https://dotnet.microsoft.com/download).
+### No navegador, sem instalar nada
+
+[![Abrir no GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/johnatantech/rateio)
+
+O Codespace sobe com **.NET 10 e SQL Server** prontos e conectados (configuração em [`.devcontainer`](.devcontainer)). No terminal:
+
+```bash
+dotnet test
+```
+
+### Na sua máquina
+
+Pré-requisito: [.NET 10 SDK](https://dotnet.microsoft.com/download). Com Docker e a extensão Dev Containers do VS Code, use **Reopen in Container** para ter o mesmo ambiente do Codespace.
 
 ```bash
 git clone https://github.com/johnatantech/rateio.git
