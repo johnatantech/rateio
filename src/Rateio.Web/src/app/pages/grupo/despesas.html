@@ -1,0 +1,96 @@
+@if (estado.participantes().length < 2) {
+  <div class="aviso">
+    <p>Adicione ao menos duas pessoas para começar a dividir.</p>
+    <button class="botao" type="button" (click)="irPara.emit('pessoas')">Adicionar pessoas</button>
+  </div>
+} @else {
+  @if (!formularioAberto()) {
+    <button class="botao lancar" type="button" (click)="abrirFormulario()">Lançar despesa</button>
+  } @else {
+    <form class="formulario" (submit)="lancar($event)" novalidate>
+      <h2>Nova despesa</h2>
+
+      <div class="linha-dupla">
+        <div>
+          <label for="descricao">Descrição</label>
+          <input id="descricao" type="text" maxlength="120" placeholder="Mercado" autocomplete="off"
+                 [value]="descricao()" (input)="descricao.set(texto($event))" />
+        </div>
+        <div>
+          <label for="valor">Valor</label>
+          <input id="valor" type="text" inputmode="decimal" placeholder="0,00" autocomplete="off"
+                 [value]="valorTexto()" (input)="valorTexto.set(texto($event))" />
+        </div>
+      </div>
+
+      <div>
+        <label for="pagou">Quem pagou</label>
+        <select id="pagou" [value]="pagoPorId()" (change)="pagoPorId.set(texto($event))">
+          @for (pessoa of estado.participantes(); track pessoa.id) {
+            <option [value]="pessoa.id" [selected]="pessoa.id === pagoPorId()">{{ pessoa.nome }}</option>
+          }
+        </select>
+      </div>
+
+      <fieldset class="divisao">
+        <legend>Como dividir</legend>
+        <div class="tipos" role="radiogroup" aria-label="Forma de divisão">
+          @for (opcao of tipos; track opcao.id) {
+            <button type="button" role="radio" [attr.aria-checked]="tipo() === opcao.id" [class.ativo]="tipo() === opcao.id"
+                    (click)="tipo.set(opcao.id)">{{ opcao.rotulo }}</button>
+          }
+        </div>
+
+        <ul class="partes">
+          @for (pessoa of estado.participantes(); track pessoa.id) {
+            <li>
+              @if (tipo() === 'Igual') {
+                <label class="marcar">
+                  <input type="checkbox" [checked]="incluidos()[pessoa.id] !== false" (change)="alternar(pessoa.id, $event)" />
+                  {{ pessoa.nome }}
+                </label>
+              } @else {
+                <label [for]="'parte-' + pessoa.id" class="nome-parte">{{ pessoa.nome }}</label>
+                <div class="campo-parte">
+                  @if (tipo() === 'Valores') { <span class="prefixo" aria-hidden="true">R$</span> }
+                  <input [id]="'parte-' + pessoa.id" type="text"
+                         [attr.inputmode]="tipo() === 'Cotas' ? 'numeric' : 'decimal'"
+                         [placeholder]="tipo() === 'Cotas' ? '1' : '0'"
+                         [value]="entrada(pessoa.id)" (input)="definirEntrada(pessoa.id, $event)" />
+                  @if (tipo() === 'Percentual') { <span class="sufixo" aria-hidden="true">%</span> }
+                </div>
+              }
+            </li>
+          }
+        </ul>
+        <p class="conferencia" [class.ok]="conferencia().ok" aria-live="polite">{{ conferencia().texto }}</p>
+      </fieldset>
+
+      @if (erro(); as mensagem) { <p class="erro" role="alert">{{ mensagem }}</p> }
+
+      <div class="acoes">
+        <button class="botao" type="submit" [disabled]="enviando()">{{ enviando() ? 'Lançando…' : 'Lançar despesa' }}</button>
+        <button class="botao-texto" type="button" (click)="formularioAberto.set(false)">Cancelar</button>
+      </div>
+    </form>
+  }
+
+  @if (estado.despesas().length > 0) {
+    <ul class="despesas">
+      @for (despesa of estado.despesas(); track despesa.id) {
+        <li>
+          <div class="despesa-principal">
+            <p class="descricao">{{ despesa.descricao }}</p>
+            <p class="valor">{{ reais(despesa.valor) }}</p>
+          </div>
+          <p class="detalhe suave">
+            {{ despesa.pagoPor.nome }} pagou em {{ despesa.data | date: 'dd/MM' }}, dividido entre {{ nomesDaDivisao(despesa) }}
+          </p>
+          <button class="botao-texto" type="button" (click)="remover(despesa)">Remover</button>
+        </li>
+      }
+    </ul>
+  } @else if (!formularioAberto()) {
+    <p class="suave vazio">Nenhuma despesa lançada. A primeira pode ser a do mercado, do aluguel ou da pizza.</p>
+  }
+}

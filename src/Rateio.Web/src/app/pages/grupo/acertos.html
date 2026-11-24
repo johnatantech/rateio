@@ -1,0 +1,96 @@
+@if (estado.despesas().length === 0) {
+  <div class="vazio">
+    <h2>Nada para acertar ainda</h2>
+    <p class="suave">Assim que alguém lançar uma despesa, os acertos aparecem aqui com o Pix pronto.</p>
+    <button class="botao" type="button" (click)="irPara.emit('despesas')">Lançar uma despesa</button>
+  </div>
+} @else {
+  @if (erro(); as mensagem) { <p class="erro" role="alert">{{ mensagem }}</p> }
+
+  @if (estado.acertos().length === 0) {
+    <div class="quite">
+      <h2>Tudo acertado</h2>
+      <p class="suave">Ninguém deve nada a ninguém neste grupo.</p>
+    </div>
+  } @else {
+    <h2 class="titulo-secao">
+      {{ estado.acertos().length === 1 ? 'Uma transferência zera o grupo' : estado.acertos().length + ' transferências zeram o grupo' }}
+    </h2>
+
+    <ol class="acertos">
+      @for (acerto of estado.acertos(); track chave(acerto)) {
+        <li class="acerto">
+          <p class="frase">
+            <span class="quem">{{ acerto.de.nome }}</span>
+            paga <span class="valor">{{ reais(acerto.valor) }}</span>
+            para <span class="quem">{{ acerto.para.nome }}</span>
+          </p>
+
+          @if (acerto.pixCopiaECola; as codigo) {
+            <div class="pix">
+              <app-qr-pix [codigo]="codigo" [descricao]="'QR Code do Pix de ' + reais(acerto.valor) + ' para ' + acerto.para.nome" />
+              <div class="pix-acoes">
+                <p class="suave">Leia o QR Code no app do banco ou copie o código e cole em Pix copia e cola.</p>
+                <button class="botao" type="button" (click)="copiar(acerto)">
+                  {{ copiado() === chave(acerto) ? 'Código copiado' : 'Copiar código Pix' }}
+                </button>
+                <button class="botao botao-secundario" type="button" [disabled]="processando() === chave(acerto)"
+                        (click)="marcarComoPago(acerto)">
+                  Marcar como pago
+                </button>
+              </div>
+            </div>
+          } @else {
+            <div class="sem-pix">
+              <p class="suave">{{ acerto.aviso }}</p>
+              <button class="botao botao-secundario" type="button" [disabled]="processando() === chave(acerto)"
+                      (click)="marcarComoPago(acerto)">
+                Marcar como pago
+              </button>
+            </div>
+          }
+        </li>
+      }
+    </ol>
+  }
+
+  <section class="saldos" aria-labelledby="titulo-saldos">
+    <h2 id="titulo-saldos" class="titulo-secao">Saldo de cada pessoa</h2>
+    <ul>
+      @for (saldo of estado.saldos(); track saldo.participanteId) {
+        <li>
+          <app-avatar [nome]="saldo.nome" />
+          <div class="saldo-info">
+            <p class="saldo-linha">
+              <span class="nome">{{ saldo.nome }}</span>
+              <span class="valor" [class.a-receber]="saldo.situacao === 'AReceber'" [class.a-pagar]="saldo.situacao === 'APagar'">
+                @switch (saldo.situacao) {
+                  @case ('AReceber') { recebe {{ reais(saldo.saldo) }} }
+                  @case ('APagar') { paga {{ reais(-saldo.saldo) }} }
+                  @default { quite }
+                }
+              </span>
+            </p>
+            <div class="barra" aria-hidden="true">
+              <span [class.positiva]="saldo.saldo > 0" [class.negativa]="saldo.saldo < 0" [style.width]="largura(saldo.saldo)"></span>
+            </div>
+          </div>
+        </li>
+      }
+    </ul>
+  </section>
+
+  @if (estado.pagamentos().length > 0) {
+    <section class="pagos" aria-labelledby="titulo-pagos">
+      <h2 id="titulo-pagos" class="titulo-secao">Já pagos</h2>
+      <ul>
+        @for (pagamento of estado.pagamentos(); track pagamento.id) {
+          <li>
+            {{ pagamento.de.nome }} pagou {{ reais(pagamento.valor) }} para {{ pagamento.para.nome }}
+            <span class="suave">em {{ pagamento.data | date: 'dd/MM' }}</span>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+}

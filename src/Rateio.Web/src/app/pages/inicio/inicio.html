@@ -1,0 +1,57 @@
+<section class="abertura">
+  <h1>Dividam a conta.<br />Cada um acerta no Pix.</h1>
+  <p class="resumo">
+    Lancem o que cada um pagou. O Rateio calcula quem deve para quem com o menor número de transferências
+    e gera o Pix copia e cola de cada acerto.
+  </p>
+</section>
+
+<form class="novo-grupo" (submit)="criar($event)" novalidate>
+  <h2>Criar um grupo</h2>
+
+  <div class="campos">
+    <div>
+      <label for="nome">Nome do grupo</label>
+      <input id="nome" type="text" placeholder="Churrasco de sábado" maxlength="100" autocomplete="off"
+             [value]="nome()" (input)="nome.set(texto($event))" />
+    </div>
+    <div>
+      <label for="cidade">Cidade</label>
+      <input id="cidade" type="text" placeholder="São Paulo" maxlength="60" autocomplete="address-level2"
+             [value]="cidade()" (input)="cidade.set(texto($event))" />
+      <p class="ajuda">Vai no Pix, como pede o padrão do Banco Central.</p>
+    </div>
+  </div>
+
+  @if (erro(); as mensagem) {
+    <p class="erro" role="alert">{{ mensagem }}</p>
+  }
+
+  <button class="botao" type="submit" [disabled]="enviando()">
+    {{ enviando() ? 'Criando…' : 'Criar grupo' }}
+  </button>
+</form>
+
+@if (meusGrupos.lista().length > 0) {
+  <section class="meus-grupos" aria-labelledby="titulo-meus-grupos">
+    <h2 id="titulo-meus-grupos">Seus grupos</h2>
+    <ul>
+      @for (grupo of meusGrupos.lista(); track grupo.id) {
+        <li>
+          <a [routerLink]="['/g', grupo.id]">{{ grupo.nome }}</a>
+          <span class="suave">aberto em {{ grupo.abertoEm | date: 'd MMM' }}</span>
+        </li>
+      }
+    </ul>
+    <p class="ajuda">Ficam guardados só neste navegador.</p>
+  </section>
+} @else {
+  <section class="como-funciona" aria-labelledby="titulo-como">
+    <h2 id="titulo-como">Como funciona</h2>
+    <ol>
+      <li><strong>Adicione as pessoas</strong> e, se quiserem receber por Pix, a chave de cada uma.</li>
+      <li><strong>Lance as despesas</strong> dizendo quem pagou e como dividir: igual, por valor, percentual ou cotas.</li>
+      <li><strong>Acertem as contas</strong> com o Pix pronto, já com o valor certo.</li>
+    </ol>
+  </section>
+}

@@ -14,19 +14,27 @@
     "DOTNET_NOLOGO": "1"
   },
 
-  "forwardPorts": [5080],
-  "portsAttributes": {
-    "5080": { "label": "API Rateio", "onAutoForward": "notify" }
+  // Node.js para o app Angular (src/Rateio.Web)
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": { "version": "22" }
   },
 
-  "postCreateCommand": "dotnet restore Rateio.slnx && dotnet build Rateio.slnx",
+  "forwardPorts": [4200, 5080],
+  "portsAttributes": {
+    "4200": { "label": "App Rateio", "onAutoForward": "notify" },
+    "5080": { "label": "API Rateio", "onAutoForward": "silent" }
+  },
+
+  "postCreateCommand": "dotnet restore Rateio.slnx && dotnet tool restore && dotnet build Rateio.slnx && cd src/Rateio.Web && npm ci",
 
   "customizations": {
     "vscode": {
       "extensions": [
         "ms-dotnettools.csdevkit",
         "ms-mssql.mssql",
-        "github.vscode-github-actions"
+        "github.vscode-github-actions",
+        "angular.ng-template",
+        "humao.rest-client"
       ]
     },
     "codespaces": {

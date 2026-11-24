@@ -7,9 +7,13 @@ Divisor de despesas em grupo que calcula **quem deve para quem com o menor núme
 
 Feito para a casa, a viagem ou o churrasco: lança as despesas, vê os saldos, paga o Pix e pronto.
 
-> 🚧 **Em construção.** Já funcionam o **núcleo de regras de negócio** e a **API REST com SQL Server**, cobertos por 363 testes. O app em Angular vem a seguir (veja o [roteiro](#roteiro)).
+> 🚧 **Em construção.** Já funcionam o **núcleo de regras de negócio**, a **API REST com SQL Server** e o **app em Angular**, cobertos por 389 testes. Falta publicar a demo (veja o [roteiro](#roteiro)).
 
-![Documentação interativa da API](docs/api-scalar.png)
+<p>
+  <img src="docs/app-acertos-celular.png" alt="Tela de acertos: cada transferência com o QR Code do Pix" width="300" />
+  &nbsp;&nbsp;
+  <img src="docs/app-nova-despesa-celular.png" alt="Lançamento de despesa dividida por valores, com conferência ao vivo" width="300" />
+</p>
 
 ## O que já funciona
 
@@ -20,10 +24,23 @@ Feito para a casa, a viagem ou o churrasco: lança as despesas, vê os saldos, p
 | **Acertos simplificados** | No máximo *n − 1* transferências para *n* pessoas; dívidas em ciclo se anulam |
 | **Pix copia e cola** | Padrão BR Code do Banco Central, com valor, descrição e conferência por CRC16 |
 | **Chaves Pix** | CPF, CNPJ (inclusive alfanumérico), e-mail, telefone e chave aleatória, com identificação automática do tipo e exibição mascarada |
+| **App** | Angular, pensado para o celular: grupos, pessoas, despesas com as 4 formas de divisão, saldos e acertos com QR Code |
 | **API REST** | Grupos, participantes, despesas, saldos, acertos e pagamentos, com documentação interativa |
 | **Persistência** | SQL Server com Entity Framework Core e migrations |
 
+## App
+
+O app tem três abas por grupo:
+
+- **Acertos:** cada transferência escrita como frase ("Caio paga R$ 85,00 para Ana"), com o **QR Code do Pix**, botão para copiar o código e para marcar como pago. Abaixo, o saldo de cada pessoa em barras.
+- **Despesas:** lançamento com as quatro formas de divisão e **conferência ao vivo** ("Faltam R$ 25,00", "Os percentuais somam 90%"), antes de enviar.
+- **Pessoas:** participantes com a chave Pix mascarada.
+
+Os grupos abertos ficam lembrados no navegador, e o link do grupo pode ser copiado para mandar no WhatsApp.
+
 ## API
+
+![Documentação interativa da API](docs/api-scalar.png)
 
 | Método | Rota | O que faz |
 |---|---|---|
@@ -67,6 +84,15 @@ Erros seguem o padrão **ProblemDetails** (RFC 9457): `400` para dado inválido 
 - **BR Code implementado do zero.** Campos no formato ID + tamanho + valor do padrão EMV e CRC16-CCITT no final. O teste principal gera **exatamente o exemplo oficial do Manual de Padrões para Iniciação do Pix**, caractere por caractere.
 - **Testes por propriedade.** 300 grupos aleatórios (semente fixa, reproduzíveis) verificam que os saldos somam zero, que nunca passam de *n − 1* transferências e que, depois dos acertos, todos ficam zerados.
 
+### App
+
+- **Nenhum cálculo de dinheiro no navegador.** Saldos, acertos e divisões vêm sempre da API; depois de qualquer alteração, o app recarrega os dados. O front só confere a divisão ao vivo para orientar quem está digitando.
+- **Valores digitados do jeito brasileiro.** `12,50`, `1.234,56` e `R$ 90` são aceitos; frações de centavo são recusadas antes de chegar à API.
+- **Angular moderno:** componentes standalone, signals, novo controle de fluxo (`@if`, `@for`), rotas com carregamento sob demanda e testes com Vitest.
+- **Fontes empacotadas no app** (Bricolage Grotesque e Atkinson Hyperlegible Next, criada para leitura fácil), sem requisição a serviços externos.
+- **Acessibilidade:** foco visível, alvos de toque de 44 px ou mais, rótulos em todos os campos, mensagens de erro anunciadas por leitores de tela e animações desligadas para quem prefere menos movimento.
+- **Proxy de desenvolvimento:** `/api` é encaminhado para a API .NET pelo `proxy.conf.json`, sem CORS em desenvolvimento.
+
 ### API e banco
 
 - **O domínio não conhece o banco.** As tabelas têm modelos de persistência próprios, e o `RepositorioDeGrupos` reconstrói o `Grupo` a partir delas. Toda alteração segue o mesmo caminho: carrega o grupo, aplica a operação no domínio (que valida as regras) e só então grava. Nenhuma regra fica duplicada na API ou em SQL.
@@ -83,16 +109,31 @@ Erros seguem o padrão **ProblemDetails** (RFC 9457): `400` para dado inválido 
 
 Clique em **Abrir no GitHub Codespaces** no topo. O ambiente sobe com **.NET 10 e SQL Server** prontos e conectados (configuração em [`.devcontainer`](.devcontainer)).
 
+Em um terminal, suba a API:
+
 ```bash
-dotnet test                                   # 363 testes, incluindo integração com o banco
 dotnet run --project src/Rateio.Api           # API em http://localhost:5080
 ```
 
-Com a API rodando, abra a aba **Portas** do VS Code, clique no globo da porta **5080** e acrescente `/scalar` ao endereço para usar a documentação interativa. O arquivo [`Rateio.Api.http`](src/Rateio.Api/Rateio.Api.http) tem um roteiro de requisições prontas.
+Em outro terminal, suba o app:
+
+```bash
+cd src/Rateio.Web
+npm start                                     # app em http://localhost:4200
+```
+
+Abra a porta **4200** pela aba **Portas** do VS Code. A documentação da API fica em `/scalar` na porta **5080**, e o arquivo [`Rateio.Api.http`](src/Rateio.Api/Rateio.Api.http) tem um roteiro de requisições prontas.
+
+Testes:
+
+```bash
+dotnet test                                   # 363 testes: domínio e integração com o banco
+cd src/Rateio.Web && npm run test:ci          # 26 testes do app
+```
 
 ### Na sua máquina
 
-Pré-requisitos: [.NET 10 SDK](https://dotnet.microsoft.com/download) e um SQL Server (Docker, LocalDB ou instância local). Defina a variável `ConnectionStrings__Rateio` e rode os mesmos comandos. Com Docker e a extensão Dev Containers do VS Code, **Reopen in Container** recria o ambiente do Codespace.
+Pré-requisitos: [.NET 10 SDK](https://dotnet.microsoft.com/download), [Node.js 22](https://nodejs.org) e um SQL Server (Docker, LocalDB ou instância local). Defina a variável `ConnectionStrings__Rateio` e rode os mesmos comandos. Com Docker e a extensão Dev Containers do VS Code, **Reopen in Container** recria o ambiente do Codespace.
 
 ## Estrutura
 
@@ -101,12 +142,13 @@ rateio/
 ├── src/
 │   ├── Rateio.Dominio/             # regras de negócio, sem dependências
 │   ├── Rateio.Infra/               # EF Core, migrations e repositório
-│   └── Rateio.Api/                 # endpoints, contratos e tratamento de erros
+│   ├── Rateio.Api/                 # endpoints, contratos e tratamento de erros
+│   └── Rateio.Web/                 # app Angular
 ├── tests/
 │   ├── Rateio.Dominio.Tests/       # 351 testes, incluindo propriedades e exemplo do BCB
 │   └── Rateio.Api.Tests/           # 12 testes de integração com SQL Server real
-├── .devcontainer/                  # .NET 10 + SQL Server para Codespaces
-├── .github/workflows/ci.yml        # build, migrations e testes com SQL Server em container
+├── .devcontainer/                  # .NET 10, Node.js 22 e SQL Server para Codespaces
+├── .github/workflows/ci.yml        # .NET com SQL Server em container + testes e build do Angular
 ├── docs/
 ├── Directory.Build.props           # avisos tratados como erro em todos os projetos
 └── Rateio.slnx
@@ -116,7 +158,7 @@ rateio/
 
 - [x] **Semana 1:** domínio (divisão, saldos, simplificação, Pix) com testes e CI
 - [x] **Semana 2:** API ASP.NET Core + SQL Server com testes de integração
-- [ ] **Semana 3:** app Angular (grupos, despesas, saldos e QR Code)
+- [x] **Semana 3:** app Angular (grupos, despesas, saldos e QR Code)
 - [ ] **Semana 4:** PWA instalável, compartilhamento por link, deploy e demo pública
 
 ## Importante

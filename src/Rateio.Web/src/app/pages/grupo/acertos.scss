@@ -1,0 +1,63 @@
+.titulo-secao { font-size: 1.15rem; margin-bottom: 0.9rem; color: var(--tinta-suave); font-weight: 500; }
+
+.vazio, .quite { display: grid; gap: 0.75rem; justify-items: start; padding: 1rem 0 2rem; }
+.vazio h2, .quite h2 { font-size: 1.6rem; }
+.quite h2 { color: var(--verde); }
+
+.acertos { list-style: none; margin: 0 0 2.5rem; padding: 0; display: grid; gap: 1rem; }
+
+.acerto {
+  padding: 1.4rem;
+  background: var(--superficie);
+  border-radius: var(--raio-bloco);
+  border-left: 6px solid var(--framboesa);
+}
+
+.frase {
+  font-family: var(--fonte-titulo);
+  font-size: clamp(1.45rem, 6vw, 2rem);
+  line-height: 1.2;
+  font-weight: 500;
+  color: var(--tinta-suave);
+
+  .quem { color: var(--tinta); font-weight: 700; }
+  .valor { color: var(--framboesa); font-weight: 700; white-space: nowrap; }
+}
+
+.pix {
+  display: grid;
+  gap: 1.1rem;
+  margin-top: 1.2rem;
+
+  @media (min-width: 34rem) { grid-template-columns: 200px 1fr; align-items: center; }
+
+  app-qr-pix { border: 1px solid var(--linha); border-radius: 12px; justify-self: start; }
+}
+
+.pix-acoes { display: grid; gap: 0.7rem; justify-items: start; }
+
+.sem-pix { display: grid; gap: 0.7rem; justify-items: start; margin-top: 0.9rem; }
+
+.saldos ul, .pagos ul { list-style: none; margin: 0; padding: 0; }
+
+.saldos li { display: flex; align-items: center; gap: 0.85rem; padding: 0.65rem 0; }
+
+.saldo-info { flex: 1; min-width: 0; }
+
+.saldo-linha { display: flex; justify-content: space-between; gap: 1rem; }
+.nome { font-weight: 700; }
+
+.barra {
+  height: 6px;
+  margin-top: 0.35rem;
+  border-radius: 99px;
+  background: var(--linha);
+  overflow: hidden;
+
+  span { display: block; height: 100%; border-radius: 99px; }
+  .positiva { background: var(--verde); }
+  .negativa { background: var(--framboesa); }
+}
+
+.pagos { margin-top: 2rem; }
+.pagos li { padding: 0.5rem 0; border-bottom: 1px solid var(--linha); }

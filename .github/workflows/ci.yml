@@ -90,3 +90,29 @@ jobs:
           name: resultados-testes
           path: TestResults
           retention-days: 14
+
+  web:
+    name: App (Angular) · testes e build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: src/Rateio.Web
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: src/Rateio.Web/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Testes (Vitest)
+        run: npm run test:ci
+
+      - name: Build de produção
+        run: npm run build

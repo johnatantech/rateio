@@ -3,7 +3,7 @@
 
 @api = http://localhost:5080/api
 
-### Criar grupo 
+### Criar grupo
 # @name grupo
 POST {{api}}/grupos
 Content-Type: application/json

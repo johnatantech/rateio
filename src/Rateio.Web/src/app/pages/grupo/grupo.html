@@ -1,0 +1,44 @@
+@if (estado.carregando() && !estado.grupo()) {
+  <p class="suave" aria-live="polite">Abrindo o grupo…</p>
+} @else if (estado.erroAoCarregar(); as erro) {
+  <div class="falha">
+    <p class="erro" role="alert">{{ erro }}</p>
+    <a routerLink="/" class="botao botao-secundario">Voltar ao início</a>
+  </div>
+} @else if (estado.grupo(); as grupo) {
+  <header class="cabecalho">
+    <h1>{{ grupo.nome }}</h1>
+    <p class="resumo">
+      @if (grupo.quantidadeDespesas > 0) {
+        <span class="valor">{{ reais(grupo.totalGasto) }}</span> em
+        {{ grupo.quantidadeDespesas }} {{ grupo.quantidadeDespesas === 1 ? 'despesa' : 'despesas' }},
+        entre {{ grupo.participantes.length }} pessoas
+      } @else {
+        Nenhuma despesa ainda
+      }
+    </p>
+    <button type="button" class="botao-texto" (click)="copiarLink()">
+      {{ linkCopiado() ? 'Link copiado' : 'Copiar link para o grupo' }}
+    </button>
+  </header>
+
+  <nav class="abas" aria-label="Seções do grupo">
+    @for (item of abas; track item.id) {
+      <button type="button" [class.ativa]="aba() === item.id" [attr.aria-current]="aba() === item.id ? 'page' : null"
+              (click)="aba.set(item.id)">
+        {{ item.rotulo }}
+        @if (item.id === 'acertos' && estado.acertos().length > 0) {
+          <span class="contador">{{ estado.acertos().length }}</span>
+        }
+      </button>
+    }
+  </nav>
+
+  <section class="painel">
+    @switch (aba()) {
+      @case ('acertos') { <app-acertos (irPara)="aba.set($event)" /> }
+      @case ('despesas') { <app-despesas (irPara)="aba.set($event)" /> }
+      @case ('pessoas') { <app-pessoas (irPara)="aba.set($event)" /> }
+    }
+  </section>
+}

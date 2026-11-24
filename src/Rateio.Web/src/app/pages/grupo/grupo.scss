@@ -1,0 +1,53 @@
+.cabecalho {
+  padding: 1rem 0 1.25rem;
+
+  h1 { font-size: clamp(2rem, 8vw, 2.9rem); letter-spacing: -0.02em; }
+  .resumo { margin-top: 0.4rem; color: var(--tinta-suave); }
+  .valor { color: var(--tinta); }
+  .botao-texto { margin-top: 0.35rem; padding-left: 0; }
+}
+
+.abas {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.5rem 0;
+  background: var(--papel);
+  border-bottom: 1px solid var(--linha);
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 2.75rem;
+    padding: 0.5rem 1rem;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    font: inherit;
+    font-weight: 700;
+    color: var(--tinta-suave);
+    cursor: pointer;
+  }
+
+  button:hover { color: var(--tinta); }
+  button.ativa { background: var(--tinta); color: var(--papel); }
+}
+
+.contador {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.4rem;
+  height: 1.4rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: var(--framboesa);
+  color: #fff;
+  font-size: 0.8rem;
+}
+
+.painel { padding-top: 1.5rem; }
+
+.falha { display: grid; gap: 1rem; justify-items: start; padding-top: 2rem; }
