@@ -7,7 +7,7 @@ Divisor de despesas em grupo que calcula **quem deve para quem com o menor núme
 
 Feito para a casa, a viagem ou o churrasco: lança as despesas, vê os saldos, paga o Pix e pronto.
 
-**Demo:** <!-- cole aqui o link da Vercel, ex.: https://rateio-johnatan.vercel.app -->
+**Demo:** [rateioweb.vercel.app](https://rateioweb.vercel.app)
 
 > A API da demo roda no plano gratuito do Render e hiberna após um tempo sem uso. Na primeira abertura, o app avisa e aguarda o servidor acordar, o que pode levar até um minuto.
 
