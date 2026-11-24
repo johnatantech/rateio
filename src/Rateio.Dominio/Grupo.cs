@@ -21,14 +21,21 @@ public sealed class Grupo
         Nome = nome.Trim();
     }
 
-    public Participante AdicionarParticipante(string nome, ChavePix? chave = null)
+    public Participante AdicionarParticipante(string nome, ChavePix? chave = null) =>
+        AdicionarParticipante(new Participante(nome, chave));
+
+    /// <summary>Adiciona um participante já existente (ex.: ao reconstruir o grupo a partir do banco).</summary>
+    public Participante AdicionarParticipante(Participante participante)
     {
-        if (_participantes.Any(p => p.Nome.Equals(nome.Trim(), StringComparison.OrdinalIgnoreCase)))
-            throw new InvalidOperationException($"Já existe um participante chamado {nome.Trim()} no grupo.");
-        var participante = new Participante(nome, chave);
+        if (_participantes.Any(p => p.Nome.Equals(participante.Nome, StringComparison.OrdinalIgnoreCase)))
+            throw new InvalidOperationException($"Já existe um participante chamado {participante.Nome} no grupo.");
+        if (_participantes.Any(p => p.Id == participante.Id))
+            throw new InvalidOperationException("Participante já adicionado ao grupo.");
         _participantes.Add(participante);
         return participante;
     }
+
+    public Participante? BuscarParticipante(Guid id) => _participantes.FirstOrDefault(p => p.Id == id);
 
     public void AdicionarDespesa(Despesa despesa)
     {
@@ -37,6 +44,8 @@ public sealed class Grupo
             GarantirMembro(participante);
         _despesas.Add(despesa);
     }
+
+    public bool RemoverDespesa(Guid despesaId) => _despesas.RemoveAll(d => d.Id == despesaId) > 0;
 
     public void RegistrarPagamento(Pagamento pagamento)
     {

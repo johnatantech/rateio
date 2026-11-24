@@ -1,8 +1,11 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/Rateio.Api/Rateio.Api.csproj" />
     <Project Path="src/Rateio.Dominio/Rateio.Dominio.csproj" />
+    <Project Path="src/Rateio.Infra/Rateio.Infra.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Rateio.Api.Tests/Rateio.Api.Tests.csproj" />
     <Project Path="tests/Rateio.Dominio.Tests/Rateio.Dominio.Tests.csproj" />
   </Folder>
 </Solution>

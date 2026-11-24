@@ -19,10 +19,30 @@ env:
   DOTNET_CLI_TELEMETRY_OPTOUT: true
 
 jobs:
-  dominio:
-    name: Domínio (.NET) · build e testes
+  build-e-testes:
+    name: Build e testes (.NET + SQL Server)
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+
+    # SQL Server descartável só para os testes de integração; a senha vale apenas dentro deste container
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_PID: Developer
+          MSSQL_SA_PASSWORD: "Rateio_CI_Teste_2026!"
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Rateio_CI_Teste_2026!' -C -Q 'SELECT 1' || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 12
+          --health-start-period 20s
+
+    env:
+      ConnectionStrings__Rateio: "Server=localhost,1433;Database=Rateio;User Id=sa;Password=Rateio_CI_Teste_2026!;TrustServerCertificate=True"
 
     steps:
       - uses: actions/checkout@v7
@@ -39,17 +59,29 @@ jobs:
           restore-keys: nuget-${{ runner.os }}-
 
       - name: Restaurar
-        run: dotnet restore Rateio.slnx
+        run: |
+          dotnet restore Rateio.slnx
+          dotnet tool restore
 
       - name: Compilar (avisos tratados como erro)
         run: dotnet build Rateio.slnx -c Release --no-restore
 
-      - name: Testar
+      - name: Conferir se as migrations estão em dia com o modelo
+        run: dotnet ef migrations has-pending-model-changes --project src/Rateio.Infra --startup-project src/Rateio.Infra --no-build --configuration Release
+
+      - name: Testar (domínio + integração com SQL Server)
         run: >
           dotnet test Rateio.slnx -c Release --no-build
-          --logger "trx;LogFileName=resultados.trx"
+          --logger trx
           --collect:"XPlat Code Coverage"
           --results-directory TestResults
+
+      - name: Garantir que os testes de integração rodaram (não foram pulados)
+        run: |
+          if grep -q 'outcome="NotExecuted"' TestResults/*.trx 2>/dev/null; then
+            echo "::error::Há testes pulados. Confira a variável ConnectionStrings__Rateio."
+            exit 1
+          fi
 
       - name: Publicar resultados
         if: always()

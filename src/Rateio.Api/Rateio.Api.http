@@ -1,0 +1,45 @@
+# Requisições de exemplo. No VS Code, instale a extensão "REST Client" e clique em "Send Request".
+# Também dá para testar tudo pela documentação interativa em http://localhost:5080/scalar
+
+@api = http://localhost:5080/api
+
+### Criar grupo 
+# @name grupo
+POST {{api}}/grupos
+Content-Type: application/json
+
+{ "nome": "Churrasco", "cidade": "São Paulo" }
+
+###
+@grupoId = {{grupo.response.body.id}}
+
+### Adicionar participante com chave Pix (o tipo é identificado automaticamente)
+# @name ana
+POST {{api}}/grupos/{{grupoId}}/participantes
+Content-Type: application/json
+
+{ "nome": "Ana", "chavePix": "ana@email.com" }
+
+### Adicionar participante sem chave Pix
+# @name caio
+POST {{api}}/grupos/{{grupoId}}/participantes
+Content-Type: application/json
+
+{ "nome": "Caio" }
+
+### Lançar despesa dividida igualmente entre todos
+POST {{api}}/grupos/{{grupoId}}/despesas
+Content-Type: application/json
+
+{
+  "descricao": "Carne",
+  "pagoPorId": "{{ana.response.body.id}}",
+  "valor": 180.00,
+  "divisao": { "tipo": "Igual" }
+}
+
+### Saldos
+GET {{api}}/grupos/{{grupoId}}/saldos
+
+### Acertos com Pix copia e cola
+GET {{api}}/grupos/{{grupoId}}/acertos

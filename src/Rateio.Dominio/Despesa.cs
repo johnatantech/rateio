@@ -41,6 +41,8 @@ public sealed record Despesa
 /// <summary>Transferência já realizada entre membros do grupo (acerto pago).</summary>
 public sealed record Pagamento(Participante De, Participante Para, Dinheiro Valor, DateOnly Data)
 {
+    public Guid Id { get; init; } = Guid.NewGuid();
+
     public Pagamento(Participante de, Participante para, Dinheiro valor) : this(de, para, valor, DateOnly.FromDateTime(DateTime.Today)) { }
 }
 
