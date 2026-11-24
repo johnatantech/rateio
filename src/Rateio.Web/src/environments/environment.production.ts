@@ -3,5 +3,5 @@
  * Ele aparece no topo da página do serviço, no painel do Render.
  */
 export const environment = {
-  apiUrl: 'https://rateio-api.onrender.com',
+  apiUrl: 'https://rateio-gtdl.onrender.com',
 };
